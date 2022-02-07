@@ -41,7 +41,6 @@ contract Voting is Ownable {
 
     uint256 private winningProposalId;
 
-    // Init WorkFlowStatus.
     WorkflowStatus private workFlowStatus;
 
     /*
@@ -168,6 +167,7 @@ contract Voting is Ownable {
         proposals[proposalId].voteCount++;
         voteDetails[msg.sender] = proposals[proposalId];
         whitelist[msg.sender].hasVoted = true;
+        whitelist[msg.sender].votedProposalId = proposalId;
 
         emit Voted(msg.sender, proposalId);
     }
@@ -192,6 +192,7 @@ contract Voting is Ownable {
 
     /*
      * Count proposal vote.
+     * TODO: return many proposals if there is a tie.
      */
     function countVote() public onlyOwner {
         require(
@@ -240,5 +241,30 @@ contract Voting is Ownable {
             "Winner can't be checked now. Votes aren't tallied yet."
         );
         return proposals[winningProposalId];
+    }
+
+    /*
+     * Return all the votes.
+     */
+    function getVotes() public view returns (mapping(address => Proposal)) {
+        return voteDetails;
+    }
+
+    /*
+     * Return the vote of one voter.
+     * @param account address of the voter.
+     */
+    function getAccountVote(address account)
+        public
+        view
+        returns (Proposal memory)
+    {
+        require(
+            voteDetails[account].isRegistered,
+            "This address isn't registered as voter."
+        );
+        require(voteDetails[account].hasVoted, "This voter didn't vote.");
+
+        return voteDetails[account];
     }
 }
